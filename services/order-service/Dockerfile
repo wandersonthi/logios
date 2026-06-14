@@ -12,10 +12,12 @@ RUN npm install express pg
 RUN npm install -g typescript
 
 # Copia o código fonte
-COPY services/order-service/tsconfig.json ./
-COPY services/order-service/src ./src
+COPY tsconfig.json ./
+COPY services/order-service/tsconfig.json ./services/order-service/
+COPY services/order-service/src ./services/order-service/src
 
 # Compila
+WORKDIR /app/services/order-service
 RUN tsc
 
 EXPOSE 3001

@@ -9,9 +9,11 @@ WORKDIR /app/services/tracking-service
 RUN npm install express pg
 RUN npm install -g typescript
 
-COPY services/tracking-service/tsconfig.json ./
-COPY services/tracking-service/src ./src
+COPY tsconfig.json ./
+COPY services/tracking-service/tsconfig.json ./services/tracking-service/
+COPY services/tracking-service/src ./services/tracking-service/src
 
+WORKDIR /app/services/tracking-service
 RUN tsc
 
 EXPOSE 3002
