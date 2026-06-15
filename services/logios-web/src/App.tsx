@@ -361,8 +361,31 @@ export default function App() {
         )}
 
         {activeTab === 'Auditoria' && (
-          <div className="placeholder-content">
-            <p>Selecione o Dashboard para ver as métricas e logs integrados do sistema.</p>
+          <div className="audit-panel">
+            <div className="audit-header">
+              <div>
+                <h3>Histórico Completo de Auditoria</h3>
+                <p>Todos os eventos e logs gerados pelo sistema e registrados pelo Singleton.</p>
+              </div>
+              <div className="badges">
+                <span className="badge-singleton">Singleton ⓘ</span>
+              </div>
+            </div>
+            <div className="audit-feed" style={{maxHeight: 'none'}}>
+              {auditLogs.length === 0 && <p className="empty-state">Nenhum evento registrado ainda.</p>}
+              {auditLogs.map((log, idx) => (
+                <div key={idx} className="audit-item">
+                  <p className="timestamp">{new Date(log.timestamp).toLocaleString('pt-BR')}</p>
+                  <p className="log-msg">
+                    {log.message.includes('[Observer]') ? (
+                      <>
+                        <span className="highlight-observer">[Observer]</span> {log.message.replace('[Observer]', '')}
+                      </>
+                    ) : log.message}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>
