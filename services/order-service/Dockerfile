@@ -8,7 +8,7 @@ COPY services/order-service/package.json ./services/order-service/
 
 # Como não estamos usando um lockfile complexo aqui, vamos apenas instalar as deps do order-service
 WORKDIR /app/services/order-service
-RUN npm install express pg
+RUN npm install express pg cors
 RUN npm install -g typescript
 
 # Copia o código fonte

@@ -6,7 +6,7 @@ COPY package.json ./
 COPY services/tracking-service/package.json ./services/tracking-service/
 
 WORKDIR /app/services/tracking-service
-RUN npm install express pg
+RUN npm install express pg cors
 RUN npm install -g typescript
 
 COPY tsconfig.json ./

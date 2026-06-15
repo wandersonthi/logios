@@ -35,6 +35,16 @@ services:
       - DATABASE_URL=postgres://logios_user:logios_password@db:5432/logios_db
     depends_on:
       - db
+      
+  web:
+    build:
+      context: ./services/logios-web
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - order-service
+      - tracking-service
 
 volumes:
   postgres_data:

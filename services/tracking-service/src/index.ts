@@ -1,7 +1,9 @@
 import express from 'express';
+import cors from 'cors';
 import { TrackingController } from './presentation/controllers/TrackingController';
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const trackingController = new TrackingController();

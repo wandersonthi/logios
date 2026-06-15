@@ -4,7 +4,9 @@
   "description": "Logistics and Delivery Management System",
   "private": true,
   "workspaces": [
-    "services/*"
+    "services/order-service",
+    "services/tracking-service",
+    "services/logios-web"
   ],
   "scripts": {
     "test": "jest",

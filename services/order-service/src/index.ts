@@ -1,7 +1,9 @@
 import express from 'express';
+import cors from 'cors';
 import { OrderController } from './presentation/controllers/OrderController';
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const orderController = new OrderController();
