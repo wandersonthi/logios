@@ -127,6 +127,13 @@ export default function App() {
                 </div>
                 <h3>{entregues}</h3>
               </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Cancelados</span>
+                  <span className="icon-light">⊗</span>
+                </div>
+                <h3>{cancelados}</h3>
+              </div>
             </div>
 
             {/* Auditoria Integrada */}
