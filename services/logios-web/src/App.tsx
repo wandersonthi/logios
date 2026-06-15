@@ -42,7 +42,19 @@ function App() {
       });
       
       if (!res.ok) throw new Error('Erro ao criar pedido');
-      showNotification('Pedido criado com sucesso!', 'success');
+      
+      // Auto-criar o rastreio inicial para facilitar a demonstração
+      await fetch(TRACKING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          status: 'PREPARANDO',
+          location: 'Centro de Distribuição Inicial'
+        })
+      });
+
+      showNotification('Pedido e Rastreio gerados com sucesso!', 'success');
     } catch (err: any) {
       showNotification(err.message, 'error');
     }
