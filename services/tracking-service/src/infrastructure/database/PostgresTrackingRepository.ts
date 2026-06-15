@@ -45,7 +45,7 @@ export class PostgresTrackingRepository implements ITrackingRepository {
   }
 
   async findAll(): Promise<Tracking[]> {
-    const query = 'SELECT * FROM trackings';
+    const query = 'SELECT * FROM tracking';
     const result = await this.pool.query(query);
 
     return result.rows.map(row => new Tracking(
