@@ -28,16 +28,27 @@ export class TrackingController {
     }
   }
 
-  async get(req: Request, res: Response): Promise<void> {
+  async getByOrderId(req: Request, res: Response): Promise<void> {
     try {
-      const tracking = await this.getUseCase.execute(req.params.orderId);
+      const repository = new PostgresTrackingRepository();
+      const tracking = await repository.findByOrderId(req.params.orderId);
       if (!tracking) {
         res.status(404).json({ message: 'Tracking not found' });
         return;
       }
       res.status(200).json(tracking);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(404).json({ message: error.message });
+    }
+  }
+
+  async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const repository = new PostgresTrackingRepository();
+      const trackings = await repository.findAll();
+      res.status(200).json(trackings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   }
 }

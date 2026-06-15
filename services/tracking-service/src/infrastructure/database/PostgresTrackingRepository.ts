@@ -43,4 +43,16 @@ export class PostgresTrackingRepository implements ITrackingRepository {
     const row = result.rows[0];
     return new Tracking(row.order_id, row.status, row.location, new Date(row.updated_at));
   }
+
+  async findAll(): Promise<Tracking[]> {
+    const query = 'SELECT * FROM trackings';
+    const result = await this.pool.query(query);
+
+    return result.rows.map(row => new Tracking(
+      row.order_id,
+      row.status,
+      row.location,
+      row.updated_at
+    ));
+  }
 }

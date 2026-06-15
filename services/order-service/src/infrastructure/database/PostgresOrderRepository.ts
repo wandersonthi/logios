@@ -57,4 +57,18 @@ export class PostgresOrderRepository implements IOrderRepository {
       row.items
     );
   }
+
+  async findAll(): Promise<Order[]> {
+    const query = 'SELECT * FROM orders ORDER BY id DESC';
+    const result = await this.pool.query(query);
+
+    return result.rows.map(row => new Order(
+      row.id,
+      row.customer_id,
+      parseFloat(row.weight),
+      parseFloat(row.distance),
+      row.shipping_type,
+      row.items
+    ));
+  }
 }

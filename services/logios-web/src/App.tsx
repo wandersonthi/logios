@@ -1,214 +1,170 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react';
+import './index.css';
 
 const ORDER_API = 'http://136.248.113.7:3001/orders';
 const TRACKING_API = 'http://136.248.113.7:3002/tracking';
+const AUDIT_API = 'http://136.248.113.7:3001/audit';
 
-function App() {
-  const [orderId, setOrderId] = useState('');
-  const [customerId, setCustomerId] = useState('');
-  const [weight, setWeight] = useState('');
-  const [distance, setDistance] = useState('');
-  const [shippingType, setShippingType] = useState('standard');
-  const [items, setItems] = useState('');
-  
-  const [trackingId, setTrackingId] = useState('');
-  const [trackingResult, setTrackingResult] = useState<any>(null);
-  const [updateStatus, setUpdateStatus] = useState('EM_TRANSITO');
-  const [updateLocation, setUpdateLocation] = useState('');
-  
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+export default function App() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [trackings, setTrackings] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('Dashboard');
 
-  const showNotification = (msg: string, type: string) => {
-    setNotification({ show: true, message: msg, type });
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
-  };
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Polling every 5s for realtime effect
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleCreateOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchData = async () => {
     try {
-      const payload = {
-        id: orderId,
-        customerId,
-        weight: Number(weight),
-        distance: Number(distance),
-        shippingType,
-        items: items.split(',').map(i => i.trim())
-      };
-      
-      const res = await fetch(ORDER_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      if (!res.ok) throw new Error('Erro ao criar pedido');
-      
-      // Auto-criar o rastreio inicial para facilitar a demonstração
-      await fetch(TRACKING_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderId,
-          status: 'PREPARANDO',
-          location: 'Centro de Distribuição Inicial'
-        })
-      });
+      const [ordersRes, trackingsRes, auditRes] = await Promise.all([
+        fetch(ORDER_API).catch(() => null),
+        fetch(TRACKING_API).catch(() => null),
+        fetch(AUDIT_API).catch(() => null)
+      ]);
 
-      showNotification('Pedido e Rastreio gerados com sucesso!', 'success');
-    } catch (err: any) {
-      showNotification(err.message, 'error');
+      if (ordersRes && ordersRes.ok) setOrders(await ordersRes.json());
+      if (trackingsRes && trackingsRes.ok) setTrackings(await trackingsRes.json());
+      if (auditRes && auditRes.ok) setAuditLogs(await auditRes.json());
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleConsultTracking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${TRACKING_API}/${trackingId}`);
-      if (!res.ok) throw new Error('Rastreio não encontrado');
-      const data = await res.json();
-      setTrackingResult(data);
-      showNotification('Rastreio atualizado!', 'success');
-    } catch (err: any) {
-      showNotification(err.message, 'error');
-      setTrackingResult(null);
-    }
-  };
+  // Calcula Métricas
+  const totalOrders = orders.length;
+  // Simulando Receita (Peso * Distancia * 1.5)
+  const totalRevenue = orders.reduce((acc, o) => acc + (o.weight * o.distance * 1.5), 0);
+  const ticketMedio = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
-  const handleUpdateTracking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        orderId: trackingId,
-        status: updateStatus,
-        location: updateLocation
-      };
-      
-      const res = await fetch(TRACKING_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      if (!res.ok) throw new Error('Erro ao atualizar rastreio');
-      showNotification('Rastreio atualizado com sucesso!', 'success');
-      handleConsultTracking(e); // recarrega os dados
-    } catch (err: any) {
-      showNotification(err.message, 'error');
-    }
-  };
+  const processando = trackings.filter(t => t.status === 'PREPARANDO').length;
+  const emRota = trackings.filter(t => t.status === 'EM_TRANSITO').length;
+  const entregues = trackings.filter(t => t.status === 'ENTREGUE').length;
+  const cancelados = trackings.filter(t => t.status === 'CANCELADO').length;
 
   return (
-    <div className="app-container">
-      <div className="background-shapes">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-      </div>
-      
-      <header className="header">
-        <div className="logo-container">
+    <div className="layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
           <div className="logo-icon"></div>
-          <h1>Logios Dashboard</h1>
+          <h2>LogisOS</h2>
         </div>
-        <p>Sistema Inteligente de Logística e Rastreio</p>
-      </header>
-
-      {notification.show && (
-        <div className={`notification ${notification.type}`}>
-          {notification.message}
+        <nav className="sidebar-menu">
+          <p className="menu-label">MENU PRINCIPAL</p>
+          <button className={`menu-item ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('Dashboard')}>
+            <span className="icon">📊</span> Dashboard
+          </button>
+          <button className={`menu-item ${activeTab === 'Pedidos' ? 'active' : ''}`} onClick={() => setActiveTab('Pedidos')}>
+            <span className="icon">📦</span> Pedidos
+          </button>
+          <button className={`menu-item ${activeTab === 'Auditoria' ? 'active' : ''}`} onClick={() => setActiveTab('Auditoria')}>
+            <span className="icon">📄</span> Auditoria
+          </button>
+        </nav>
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <div className="avatar">OP</div>
+            <div>
+              <p className="username">Operador 01</p>
+              <p className="status">Online</p>
+            </div>
+          </div>
         </div>
-      )}
+      </aside>
 
+      {/* Main Content */}
       <main className="main-content">
-        <section className="glass-card">
-          <div className="card-header">
-            <h2>Criar Novo Pedido</h2>
-            <div className="badge">Order Service</div>
-          </div>
-          <form onSubmit={handleCreateOrder} className="modern-form">
-            <div className="form-row">
-              <div className="input-group">
-                <label>ID do Pedido</label>
-                <input required placeholder="ex: pedido-123" value={orderId} onChange={e => setOrderId(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>ID do Cliente</label>
-                <input required placeholder="ex: cliente-abc" value={customerId} onChange={e => setCustomerId(e.target.value)} />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="input-group">
-                <label>Peso (kg)</label>
-                <input type="number" required placeholder="10" value={weight} onChange={e => setWeight(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>Distância (km)</label>
-                <input type="number" required placeholder="50" value={distance} onChange={e => setDistance(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>Tipo de Frete</label>
-                <select value={shippingType} onChange={e => setShippingType(e.target.value)}>
-                  <option value="standard">Standard</option>
-                  <option value="express">Express</option>
-                </select>
-              </div>
-            </div>
-            <div className="input-group">
-              <label>Itens (separados por vírgula)</label>
-              <input required placeholder="1x Notebook, 2x Mouse" value={items} onChange={e => setItems(e.target.value)} />
-            </div>
-            <button type="submit" className="primary-button">Gerar Pedido</button>
-          </form>
-        </section>
+        <header className="page-header">
+          <h1>{activeTab}</h1>
+          <p>Visão geral da operação logística.</p>
+        </header>
 
-        <section className="glass-card tracking-card">
-          <div className="card-header">
-            <h2>Rastreamento</h2>
-            <div className="badge secondary">Tracking Service</div>
-          </div>
-          
-          <form onSubmit={handleConsultTracking} className="tracking-search">
-            <div className="input-group horizontal">
-              <input required placeholder="Digite o ID do pedido..." value={trackingId} onChange={e => setTrackingId(e.target.value)} />
-              <button type="submit" className="primary-button">Consultar</button>
+        {activeTab === 'Dashboard' && (
+          <div className="dashboard-content">
+            <div className="metrics-grid">
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Receita Total</span>
+                  <span className="icon-light">$</span>
+                </div>
+                <h3>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalRevenue)}</h3>
+              </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Ticket Médio</span>
+                  <span className="icon-light">↗</span>
+                </div>
+                <h3>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ticketMedio)}</h3>
+              </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Total de Pedidos</span>
+                  <span className="icon-light">📦</span>
+                </div>
+                <h3>{totalOrders}</h3>
+              </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Em Rota</span>
+                  <span className="icon-light">🚚</span>
+                </div>
+                <h3>{emRota}</h3>
+              </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Processando</span>
+                  <span className="icon-light">⏳</span>
+                </div>
+                <h3>{processando}</h3>
+              </div>
+              <div className="metric-card">
+                <div className="metric-header">
+                  <span>Entregues</span>
+                  <span className="icon-light">✅</span>
+                </div>
+                <h3>{entregues}</h3>
+              </div>
             </div>
-          </form>
 
-          {trackingResult && (
-            <div className="tracking-result">
-              <div className="status-indicator">
-                <div className={`pulse-ring ${trackingResult.status.toLowerCase()}`}></div>
-                <h3>Status: {trackingResult.status}</h3>
+            {/* Auditoria Integrada */}
+            <div className="audit-panel">
+              <div className="audit-header">
+                <div>
+                  <h3>Feed de Auditoria em Tempo Real</h3>
+                  <p>Últimos eventos registrados pelo sistema.</p>
+                </div>
+                <div className="badges">
+                  <span className="badge-singleton">Singleton ⓘ</span>
+                </div>
               </div>
-              
-              <div className="tracking-details">
-                <p><strong>Localização Atual:</strong> {trackingResult.location}</p>
-                <p><strong>Última atualização:</strong> {new Date(trackingResult.updatedAt).toLocaleString()}</p>
-              </div>
-
-              <div className="update-section">
-                <h4>Atualizar Rastreio</h4>
-                <form onSubmit={handleUpdateTracking} className="modern-form">
-                  <div className="form-row">
-                    <div className="input-group">
-                      <select value={updateStatus} onChange={e => setUpdateStatus(e.target.value)}>
-                        <option value="PREPARANDO">Preparando</option>
-                        <option value="EM_TRANSITO">Em Trânsito</option>
-                        <option value="ENTREGUE">Entregue</option>
-                      </select>
-                    </div>
-                    <div className="input-group">
-                      <input required placeholder="Nova localização" value={updateLocation} onChange={e => setUpdateLocation(e.target.value)} />
-                    </div>
-                    <button type="submit" className="outline-button">Salvar</button>
+              <div className="audit-feed">
+                {auditLogs.length === 0 && <p className="empty-state">Nenhum evento registrado ainda.</p>}
+                {auditLogs.map((log, idx) => (
+                  <div key={idx} className="audit-item">
+                    <p className="timestamp">{new Date(log.timestamp).toLocaleString('pt-BR')}</p>
+                    <p className="log-msg">
+                      {log.message.includes('[Observer]') ? (
+                        <>
+                          <span className="highlight-observer">[Observer]</span> {log.message.replace('[Observer]', '')}
+                        </>
+                      ) : log.message}
+                    </p>
                   </div>
-                </form>
+                ))}
               </div>
             </div>
-          )}
-        </section>
+          </div>
+        )}
+        
+        {activeTab !== 'Dashboard' && (
+          <div className="placeholder-content">
+            <p>Selecione o Dashboard para ver as métricas e logs integrados do sistema.</p>
+          </div>
+        )}
       </main>
     </div>
-  )
+  );
 }
-
-export default App

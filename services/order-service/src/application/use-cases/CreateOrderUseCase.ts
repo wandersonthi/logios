@@ -1,10 +1,15 @@
 import { Order } from '../../domain/entities/Order';
 import { IOrderRepository } from '../repositories/IOrderRepository';
 import { ShippingStrategyFactory } from '../../domain/factories/ShippingStrategyFactory';
+import { OrderSubject, OrderAuditObserver } from '../../domain/events/OrderObserver';
 
 export class CreateOrderUseCase {
-  // Dependency Inversion Principle (DIP): Depende de abstração, não de implementação
-  constructor(private orderRepository: IOrderRepository) {}
+  private subject: OrderSubject;
+
+  constructor(private orderRepository: IOrderRepository) {
+    this.subject = new OrderSubject();
+    this.subject.attach(new OrderAuditObserver());
+  }
 
   async execute(input: {
     id: string;
@@ -15,7 +20,6 @@ export class CreateOrderUseCase {
     items: string[];
   }): Promise<{ orderId: string; shippingCost: number }> {
     
-    // 1. Cria a entidade Order
     const order = new Order(
       input.id,
       input.customerId,
@@ -25,12 +29,13 @@ export class CreateOrderUseCase {
       input.items
     );
 
-    // 2. Calcula o frete usando Factory e Strategy
     const strategy = ShippingStrategyFactory.create(input.shippingType);
     const shippingCost = strategy.calculate(order);
 
-    // 3. Salva no banco de dados via repositório
     await this.orderRepository.save(order);
+
+    // Observer: Notifica sobre a criação do pedido (Processando)
+    this.subject.notify(order, 'Processando');
 
     return {
       orderId: order.id,
