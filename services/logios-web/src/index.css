@@ -269,3 +269,127 @@ body {
   border-radius: 12px;
   border: 1px solid var(--border-color);
 }
+
+/* Forms CSS */
+.forms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.form-card {
+  display: flex;
+  flex-direction: column;
+}
+.metric-header h3 {
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.badge-service {
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.input-group.full-width {
+  width: 100%;
+}
+.input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+input, select {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: #f8fafc;
+  color: var(--text-primary);
+  outline: none;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+input:focus, select:focus {
+  border-color: var(--primary-color);
+  background: #fff;
+}
+.primary-button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.primary-button:hover {
+  opacity: 0.9;
+}
+.outline-button {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.outline-button:hover {
+  background: var(--primary-color);
+  color: white;
+}
+.tracking-result {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+.status-box {
+  background: #f1f5f9;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+.status-text {
+  color: var(--primary-color);
+}
+.update-section h4 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+.notification.success { background: #10b981; }
+.notification.error { background: #ef4444; }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
