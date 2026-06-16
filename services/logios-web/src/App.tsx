@@ -4,12 +4,19 @@ import './index.css';
 const ORDER_API = 'http://136.248.113.7:3001/orders';
 const TRACKING_API = 'http://136.248.113.7:3002/tracking';
 const AUDIT_API = 'http://136.248.113.7:3001/audit';
+const LOGIN_API = 'http://136.248.113.7:3001/login';
 
 export default function App() {
   const [orders, setOrders] = useState<any[]>([]);
   const [trackings, setTrackings] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Dashboard');
+
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // Form States
   const [orderId, setOrderId] = useState('');
@@ -31,11 +38,43 @@ export default function App() {
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   };
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      const res = await fetch(LOGIN_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUser, password: loginPass })
+      });
+      if (!res.ok) throw new Error('Usuário ou senha incorretos');
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      setLoginError(err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setActiveTab('Dashboard');
+  };
+
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
     fetchData();
     const interval = setInterval(fetchData, 5000); // Polling every 5s for realtime effect
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const fetchData = async () => {
     try {
@@ -140,6 +179,36 @@ export default function App() {
   const entregues = trackings.filter(t => t.status === 'ENTREGUE').length;
   const cancelados = trackings.filter(t => t.status === 'CANCELADO').length;
 
+  if (!isAuthenticated) {
+    return (
+      <div className="login-container">
+        <div className="background-shapes">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+        </div>
+        <div className="login-card glass-card">
+          <div className="login-header">
+            <div className="logo-icon"></div>
+            <h2>LogisOS</h2>
+            <p>Sistema Inteligente de Logística e Rastreio</p>
+          </div>
+          <form onSubmit={handleLogin} className="modern-form">
+            {loginError && <div className="error-msg">{loginError}</div>}
+            <div className="input-group">
+              <label>Usuário</label>
+              <input required placeholder="ex: admin" value={loginUser} onChange={e => setLoginUser(e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>Senha</label>
+              <input type="password" required placeholder="••••••••" value={loginPass} onChange={e => setLoginPass(e.target.value)} />
+            </div>
+            <button type="submit" className="primary-button" style={{marginTop: '12px'}}>Entrar no Sistema</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -168,6 +237,7 @@ export default function App() {
               <p className="status">Online</p>
             </div>
           </div>
+          <button className="logout-button" onClick={handleLogout}>Sair da Conta</button>
         </div>
       </aside>
 

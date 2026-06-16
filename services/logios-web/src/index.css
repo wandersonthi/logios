@@ -393,3 +393,78 @@ input:focus, select:focus {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* Login Screen CSS */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-header {
+  text-align: center;
+}
+
+.login-header h2 {
+  font-size: 28px;
+  color: var(--text-primary);
+  margin: 16px 0 8px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.login-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.login-header .logo-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
+.error-msg {
+  background: #fef2f2;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #f87171;
+  text-align: center;
+}
+
+.logout-button {
+  width: 100%;
+  margin-top: 16px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  padding: 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.logout-button:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
