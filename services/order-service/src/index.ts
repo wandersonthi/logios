@@ -13,6 +13,7 @@ const authController = new AuthController();
 app.post('/orders', (req, res) => orderController.create(req, res));
 app.get('/orders', (req, res) => orderController.getAll(req, res));
 app.get('/audit', (req, res) => orderController.getAuditLogs(req, res));
+app.post('/audit', (req, res) => orderController.addAuditLog(req, res));
 app.post('/login', (req, res) => authController.login(req, res));
 
 const PORT = process.env.PORT || 3001;

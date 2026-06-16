@@ -32,9 +32,20 @@ export class TrackingSubject implements Subject {
   }
 }
 
-export class EmailNotificationObserver implements Observer {
-  update(event: any): void {
-    // Simulando envio de email (Evidência do padrão Observer)
-    console.log(`[EmailObserver] Enviar email para cliente sobre pedido ${event.orderId}. Novo status: ${event.status}`);
+export class EmailNotificationObserver implements ITrackingObserver {
+  async update(trackingData: { orderId: string; status: string; location: string }): Promise<void> {
+    const msg = `[Observer] Status atualizado via SMS/Email: Pedido #${trackingData.orderId} está agora "${trackingData.status}" em ${trackingData.location}`;
+    console.log(msg);
+    
+    // Envia o log para o serviço de pedidos centralizar a auditoria
+    try {
+      await fetch('http://logios-order-service-1:3001/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+    } catch (err) {
+      console.error('Falha ao enviar log de auditoria', err);
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CreateOrderUseCase } from '../../application/use-cases/CreateOrderUseCase';
 import { PostgresOrderRepository } from '../../infrastructure/database/PostgresOrderRepository';
+import { AuditLogger } from '../../domain/events/AuditLogger';
 
 export class OrderController {
   async create(req: Request, res: Response): Promise<void> {
@@ -30,10 +31,21 @@ export class OrderController {
 
   async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
-      // Usando o padrão Singleton para pegar a mesma instância de log
-      const { AuditLogger } = await import('../../domain/events/AuditLogger');
       const logger = AuditLogger.getInstance();
       res.status(200).json(logger.getLogs());
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async addAuditLog(req: Request, res: Response): Promise<void> {
+    try {
+      const { message } = req.body;
+      if (message) {
+        const logger = AuditLogger.getInstance();
+        logger.log(message);
+      }
+      res.status(200).json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
