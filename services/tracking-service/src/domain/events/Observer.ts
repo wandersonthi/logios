@@ -32,7 +32,7 @@ export class TrackingSubject implements Subject {
   }
 }
 
-export class EmailNotificationObserver implements ITrackingObserver {
+export class EmailNotificationObserver implements Observer {
   async update(trackingData: { orderId: string; status: string; location: string }): Promise<void> {
     const msg = `[Observer] Status atualizado via SMS/Email: Pedido #${trackingData.orderId} está agora "${trackingData.status}" em ${trackingData.location}`;
     console.log(msg);
