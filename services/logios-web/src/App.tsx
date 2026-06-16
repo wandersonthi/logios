@@ -15,6 +15,7 @@ export default function App() {
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState('operator');
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -52,6 +53,8 @@ export default function App() {
       if (!res.ok) throw new Error('Usuário ou senha incorretos');
       const data = await res.json();
       localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.user.role);
+      setUserRole(data.user.role);
       setIsAuthenticated(true);
     } catch (err: any) {
       setLoginError(err.message);
@@ -60,14 +63,18 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
     setIsAuthenticated(false);
+    setUserRole('operator');
     setActiveTab('Dashboard');
   };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
     if (token) {
       setIsAuthenticated(true);
+      if (role) setUserRole(role);
     }
   }, []);
 
@@ -171,6 +178,19 @@ export default function App() {
     }
   };
 
+  const handleClearDatabase = async () => {
+    if (!window.confirm('Tem certeza que deseja APAGAR todos os dados do sistema?')) return;
+    try {
+      const res = await fetch(`${ORDER_API}/clear`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Erro ao limpar banco de dados');
+      showNotification('Banco de dados limpo com sucesso!', 'success');
+      setTrackingResult(null);
+      fetchData();
+    } catch (err: any) {
+      showNotification(err.message, 'error');
+    }
+  };
+
   // Calcula Métricas
   const totalOrders = orders.length;
   // Simulando Receita (Peso * Distancia * 1.5)
@@ -240,13 +260,20 @@ export default function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="user-info">
-            <div className="avatar">OP</div>
+            <div className="avatar">{userRole === 'admin' ? 'AD' : 'OP'}</div>
             <div>
-              <p className="username">Operador 01</p>
+              <p className="username">{userRole === 'admin' ? 'Admin Supremo' : 'Operador 01'}</p>
               <p className="status">Online</p>
             </div>
           </div>
-          <button className="logout-button" onClick={handleLogout}>Sair da Conta</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+            {userRole === 'admin' && (
+              <button className="outline-button" onClick={handleClearDatabase} style={{width: '100%', borderColor: '#ef4444', color: '#ef4444'}}>
+                Limpar Banco
+              </button>
+            )}
+            <button className="logout-button" style={{marginTop: 0}} onClick={handleLogout}>Sair da Conta</button>
+          </div>
         </div>
       </aside>
 

@@ -50,4 +50,19 @@ export class OrderController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  async clearDatabase(req: Request, res: Response): Promise<void> {
+    try {
+      const repository = new PostgresOrderRepository();
+      // Executa TRUNCATE diretamente na conexão (apenas para ambiente de dev/demo)
+      await (repository as any).pool.query('TRUNCATE TABLE orders CASCADE; TRUNCATE TABLE tracking CASCADE;');
+      
+      const logger = AuditLogger.getInstance();
+      logger.log('[SISTEMA] O administrador limpou o banco de dados (TRUNCATE).');
+      
+      res.status(200).json({ message: 'Banco de dados limpo com sucesso' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
