@@ -4,7 +4,7 @@ export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
     const { username, password } = req.body;
 
-    if (username === 'admin' && password === 'admin') {
+    if (username === 'admin' && password === 'admin041045') {
       res.status(200).json({ 
         token: 'logios-mock-jwt-token-12345',
         user: { username: 'admin', role: 'admin' } 

@@ -191,6 +191,11 @@ export default function App() {
     }
   };
 
+  const handleExportBackup = () => {
+    // Abre a URL de exportação em uma nova aba/janela, o navegador fará o download do CSV
+    window.open(`${ORDER_API}/export`, '_blank');
+  };
+
   // Calcula Métricas
   const totalOrders = orders.length;
   // Simulando Receita (Peso * Distancia * 1.5)
@@ -268,9 +273,14 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
             {userRole === 'admin' && (
-              <button className="outline-button" onClick={handleClearDatabase} style={{width: '100%', borderColor: '#ef4444', color: '#ef4444'}}>
-                Limpar Banco
-              </button>
+              <>
+                <button className="primary-button" onClick={handleExportBackup} style={{width: '100%', backgroundColor: '#10b981'}}>
+                  Exportar Excel
+                </button>
+                <button className="outline-button" onClick={handleClearDatabase} style={{width: '100%', borderColor: '#ef4444', color: '#ef4444'}}>
+                  Limpar Banco
+                </button>
+              </>
             )}
             <button className="logout-button" style={{marginTop: 0}} onClick={handleLogout}>Sair da Conta</button>
           </div>
