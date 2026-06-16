@@ -11,6 +11,7 @@ export default function App() {
   const [trackings, setTrackings] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,7 +20,8 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
 
   // Form States
-  const [orderId, setOrderId] = useState('');
+  const generateRandomId = () => `pedido-${Math.floor(Math.random() * 100000)}`;
+  const [orderId, setOrderId] = useState(generateRandomId());
   const [customerId, setCustomerId] = useState('');
   const [weight, setWeight] = useState('');
   const [distance, setDistance] = useState('');
@@ -124,6 +126,7 @@ export default function App() {
       });
 
       showNotification('Pedido e Rastreio gerados com sucesso!', 'success');
+      setOrderId(generateRandomId());
       fetchData(); // refresh data
     } catch (err: any) {
       showNotification(err.message, 'error');
@@ -188,7 +191,7 @@ export default function App() {
         </div>
         <div className="login-card glass-card">
           <div className="login-header">
-            <div className="logo-icon"></div>
+            <img src="/logo.png" alt="LogisOS Logo" className="logo-icon" />
             <h2>LogisOS</h2>
             <p>Sistema Inteligente de Logística e Rastreio</p>
           </div>
@@ -211,21 +214,27 @@ export default function App() {
 
   return (
     <div className="layout">
+      {/* Mobile Menu Toggle */}
+      <button className="mobile-menu-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        ☰
+      </button>
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="logo-icon"></div>
+          <img src="/logo.png" alt="LogisOS Logo" className="logo-icon" />
           <h2>LogisOS</h2>
+          <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
         </div>
         <nav className="sidebar-menu">
           <p className="menu-label">MENU PRINCIPAL</p>
-          <button className={`menu-item ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('Dashboard')}>
+          <button className={`menu-item ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => { setActiveTab('Dashboard'); setIsMobileMenuOpen(false); }}>
             <span className="icon">📊</span> Dashboard
           </button>
-          <button className={`menu-item ${activeTab === 'Pedidos' ? 'active' : ''}`} onClick={() => setActiveTab('Pedidos')}>
+          <button className={`menu-item ${activeTab === 'Pedidos' ? 'active' : ''}`} onClick={() => { setActiveTab('Pedidos'); setIsMobileMenuOpen(false); }}>
             <span className="icon">📦</span> Pedidos
           </button>
-          <button className={`menu-item ${activeTab === 'Auditoria' ? 'active' : ''}`} onClick={() => setActiveTab('Auditoria')}>
+          <button className={`menu-item ${activeTab === 'Auditoria' ? 'active' : ''}`} onClick={() => { setActiveTab('Auditoria'); setIsMobileMenuOpen(false); }}>
             <span className="icon">📄</span> Auditoria
           </button>
         </nav>
