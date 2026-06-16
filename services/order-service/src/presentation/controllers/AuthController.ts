@@ -1,25 +1,25 @@
 import { Request, Response } from 'express';
+import { PostgresUserRepository } from '../../infrastructure/database/PostgresUserRepository';
 
 export class AuthController {
   async login(req: Request, res: Response): Promise<void> {
-    const { username, password } = req.body;
+    try {
+      const { username, password } = req.body;
+      const repository = new PostgresUserRepository();
+      
+      const user = await repository.findByUsername(username);
 
-    if (username === 'admin' && password === 'admin041045') {
-      res.status(200).json({ 
-        token: 'logios-mock-jwt-token-12345',
-        user: { username: 'admin', role: 'admin' } 
-      });
-      return;
+      if (user && user.password === password) {
+        res.status(200).json({ 
+          token: `logios-mock-jwt-token-${user.id}`,
+          user: { username: user.username, role: user.role } 
+        });
+        return;
+      }
+
+      res.status(401).json({ message: 'Credenciais inválidas' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
-
-    if (username === 'operador' && password === '123') {
-      res.status(200).json({ 
-        token: 'logios-mock-jwt-token-operador',
-        user: { username: 'operador', role: 'operator' } 
-      });
-      return;
-    }
-
-    res.status(401).json({ message: 'Credenciais inválidas' });
   }
 }

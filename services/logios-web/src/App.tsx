@@ -5,11 +5,13 @@ const ORDER_API = 'http://136.248.113.7:3001/orders';
 const TRACKING_API = 'http://136.248.113.7:3002/tracking';
 const AUDIT_API = 'http://136.248.113.7:3001/audit';
 const LOGIN_API = 'http://136.248.113.7:3001/login';
+const USERS_API = 'http://136.248.113.7:3001/users';
 
 export default function App() {
   const [orders, setOrders] = useState<any[]>([]);
   const [trackings, setTrackings] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -34,6 +36,11 @@ export default function App() {
   const [updateStatus, setUpdateStatus] = useState('EM_TRANSITO');
   const [updateLocation, setUpdateLocation] = useState('');
   
+  // User Management State
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState('operator');
+
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
   const showNotification = (msg: string, type: string) => {
@@ -87,15 +94,17 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const [ordersRes, trackingsRes, auditRes] = await Promise.all([
+      const [ordersRes, trackingsRes, auditRes, usersRes] = await Promise.all([
         fetch(ORDER_API).catch(() => null),
         fetch(TRACKING_API).catch(() => null),
-        fetch(AUDIT_API).catch(() => null)
+        fetch(AUDIT_API).catch(() => null),
+        userRole === 'admin' ? fetch(USERS_API).catch(() => null) : Promise.resolve(null)
       ]);
 
       if (ordersRes && ordersRes.ok) setOrders(await ordersRes.json());
       if (trackingsRes && trackingsRes.ok) setTrackings(await trackingsRes.json());
       if (auditRes && auditRes.ok) setAuditLogs(await auditRes.json());
+      if (usersRes && usersRes.ok) setSystemUsers(await usersRes.json());
     } catch (err) {
       console.error(err);
     }
@@ -192,8 +201,26 @@ export default function App() {
   };
 
   const handleExportBackup = () => {
-    // Abre a URL de exportação em uma nova aba/janela, o navegador fará o download do CSV
     window.open(`${ORDER_API}/export`, '_blank');
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(USERS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: newUsername, password: newPassword, role: newRole })
+      });
+      if (!res.ok) throw new Error('Erro ao criar usuário. Tente outro nome.');
+      showNotification('Usuário criado com sucesso!', 'success');
+      setNewUsername('');
+      setNewPassword('');
+      setNewRole('operator');
+      fetchData();
+    } catch (err: any) {
+      showNotification(err.message, 'error');
+    }
   };
 
   // Calcula Métricas
@@ -262,6 +289,11 @@ export default function App() {
           <button className={`menu-item ${activeTab === 'Auditoria' ? 'active' : ''}`} onClick={() => { setActiveTab('Auditoria'); setIsMobileMenuOpen(false); }}>
             <span className="icon">📄</span> Auditoria
           </button>
+          {userRole === 'admin' && (
+            <button className={`menu-item ${activeTab === 'Usuários' ? 'active' : ''}`} onClick={() => { setActiveTab('Usuários'); setIsMobileMenuOpen(false); }}>
+              <span className="icon">👥</span> Usuários
+            </button>
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="user-info">
@@ -501,6 +533,73 @@ export default function App() {
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Usuários' && userRole === 'admin' && (
+          <div className="orders-content">
+            {notification.show && (
+              <div className={`notification ${notification.type}`}>
+                {notification.message}
+              </div>
+            )}
+            
+            <div className="forms-grid">
+              <section className="metric-card form-card">
+                <div className="metric-header">
+                  <h3>Cadastrar Novo Usuário</h3>
+                  <span className="badge-service">Admin Panel</span>
+                </div>
+                <form onSubmit={handleCreateUser} className="modern-form">
+                  <div className="input-group">
+                    <label>Nome de Usuário</label>
+                    <input required placeholder="ex: joao.silva" value={newUsername} onChange={e => setNewUsername(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>Senha</label>
+                    <input type="password" required placeholder="Senha segura" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>Nível de Acesso (Role)</label>
+                    <select value={newRole} onChange={e => setNewRole(e.target.value)}>
+                      <option value="operator">Operador (Acesso Normal)</option>
+                      <option value="admin">Administrador (Total Acesso)</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="primary-button" style={{marginTop: '12px'}}>Cadastrar Usuário</button>
+                </form>
+              </section>
+
+              <section className="metric-card form-card">
+                <div className="metric-header">
+                  <h3>Usuários do Sistema</h3>
+                </div>
+                <div style={{overflowX: 'auto'}}>
+                  <table style={{width: '100%', borderCollapse: 'collapse', marginTop: '16px'}}>
+                    <thead>
+                      <tr style={{borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left'}}>
+                        <th style={{padding: '12px', color: '#888'}}>ID</th>
+                        <th style={{padding: '12px', color: '#888'}}>Usuário</th>
+                        <th style={{padding: '12px', color: '#888'}}>Permissão</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {systemUsers.map(u => (
+                        <tr key={u.id} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
+                          <td style={{padding: '12px', color: '#fff'}}>{u.id}</td>
+                          <td style={{padding: '12px', color: '#fff'}}>{u.username}</td>
+                          <td style={{padding: '12px'}}>
+                            <span className="badge-service" style={{backgroundColor: u.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: u.role === 'admin' ? '#ef4444' : '#3b82f6'}}>
+                              {u.role.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
           </div>
         )}
