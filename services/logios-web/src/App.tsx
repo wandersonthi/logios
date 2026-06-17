@@ -6,12 +6,14 @@ const TRACKING_API = 'http://136.248.113.7:3002/tracking';
 const AUDIT_API = 'http://136.248.113.7:3001/audit';
 const LOGIN_API = 'http://136.248.113.7:3001/login';
 const USERS_API = 'http://136.248.113.7:3001/users';
+const CUSTOMERS_API = 'http://136.248.113.7:3001/customers';
 
 export default function App() {
   const [orders, setOrders] = useState<any[]>([]);
   const [trackings, setTrackings] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
+  const [customersList, setCustomersList] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -47,6 +49,14 @@ export default function App() {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('operator');
+
+  // Customer Management State
+  const [newCustId, setNewCustId] = useState(generateRandomId());
+  const [newCustName, setNewCustName] = useState('');
+  const [newCustPhone, setNewCustPhone] = useState('');
+  const [newCustEmail, setNewCustEmail] = useState('');
+  const [newCustAddress, setNewCustAddress] = useState('');
+  const [newCustCep, setNewCustCep] = useState('');
 
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
@@ -101,16 +111,18 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const [ordersRes, trackingsRes, auditRes, usersRes] = await Promise.all([
+      const [ordersRes, trackingsRes, auditRes, customersRes, usersRes] = await Promise.all([
         fetch(ORDER_API).catch(() => null),
         fetch(TRACKING_API).catch(() => null),
         fetch(AUDIT_API).catch(() => null),
+        fetch(CUSTOMERS_API).catch(() => null),
         userRole === 'admin' ? fetch(USERS_API).catch(() => null) : Promise.resolve(null)
       ]);
 
       if (ordersRes && ordersRes.ok) setOrders(await ordersRes.json());
       if (trackingsRes && trackingsRes.ok) setTrackings(await trackingsRes.json());
       if (auditRes && auditRes.ok) setAuditLogs(await auditRes.json());
+      if (customersRes && customersRes.ok) setCustomersList(await customersRes.json());
       if (usersRes && usersRes.ok) setSystemUsers(await usersRes.json());
     } catch (err) {
       console.error(err);
@@ -247,6 +259,29 @@ export default function App() {
     }
   };
 
+  const handleCreateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        id: newCustId, name: newCustName, phone: newCustPhone, 
+        email: newCustEmail, address: newCustAddress, cep: newCustCep
+      };
+      const res = await fetch(CUSTOMERS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('Erro ao cadastrar cliente');
+      showNotification('Cliente cadastrado com sucesso!', 'success');
+      setNewCustId(generateRandomId());
+      setNewCustName(''); setNewCustPhone(''); setNewCustEmail('');
+      setNewCustAddress(''); setNewCustCep('');
+      fetchData();
+    } catch (err: any) {
+      showNotification(err.message, 'error');
+    }
+  };
+
   const handleExportBackup = () => {
     window.open(`${ORDER_API}/export`, '_blank');
   };
@@ -297,24 +332,24 @@ export default function App() {
   const standardDays = Math.max(1, Math.ceil(parsedDistance / 50));
   const expressDays = Math.max(1, Math.ceil(parsedDistance / 100));
 
-  // Agrupar clientes
-  const customersMap = new Map();
-  orders.forEach(o => {
-    if (!o.customerId) return;
-    if (!customersMap.has(o.customerId)) {
-      customersMap.set(o.customerId, {
-        id: o.customerId,
-        name: o.customerName,
-        phone: o.customerPhone,
-        email: o.customerEmail,
-        address: o.deliveryAddress,
-        orders: []
-      });
-    }
-    customersMap.get(o.customerId).orders.push(o);
-  });
-  const uniqueCustomers = Array.from(customersMap.values());
+  const uniqueCustomers = customersList.map(c => ({
+    ...c,
+    orders: orders.filter(o => o.customerId === c.id)
+  }));
   const selectedCustomerObj = uniqueCustomers.find(c => c.id === selectedCustomerId);
+
+  // Manipular preenchimento automático do pedido ao selecionar cliente
+  const handleSelectCustomerForOrder = (cid: string) => {
+    setCustomerId(cid);
+    const c = customersList.find(x => x.id === cid);
+    if (c) {
+      setCustomerName(c.name);
+      setCustomerPhone(c.phone);
+      setCustomerEmail(c.email);
+      setDeliveryAddress(c.address);
+      setCep(c.cep);
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -516,34 +551,39 @@ export default function App() {
                       <input required placeholder="ex: 12345" value={orderId} onChange={e => setOrderId(e.target.value)} />
                     </div>
                     <div className="input-group">
-                      <label>ID do Cliente</label>
-                      <input required placeholder="ex: CLI-999" value={customerId} onChange={e => setCustomerId(e.target.value)} />
+                      <label>Cliente (Auto-preenchimento)</label>
+                      <select required value={customerId} onChange={e => handleSelectCustomerForOrder(e.target.value)}>
+                        <option value="" disabled>Selecione um cliente...</option>
+                        {customersList.map(c => (
+                          <option key={c.id} value={c.id}>{c.name} (ID: {c.id})</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   
                   <div className="form-row">
                     <div className="input-group">
                       <label>Nome Completo do Cliente</label>
-                      <input required placeholder="Nome do Destinatário" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                      <input required placeholder="Nome do Destinatário" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled style={{opacity: 0.7}} />
                     </div>
                     <div className="input-group">
                       <label>Telefone / SMS</label>
-                      <input required placeholder="(11) 99999-9999" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                      <input required placeholder="(11) 99999-9999" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} disabled style={{opacity: 0.7}} />
                     </div>
                     <div className="input-group">
                       <label>E-mail (Notificações)</label>
-                      <input type="email" required placeholder="cliente@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} />
+                      <input type="email" required placeholder="cliente@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} disabled style={{opacity: 0.7}} />
                     </div>
                   </div>
 
                   <div className="form-row">
                     <div className="input-group" style={{ flex: 2 }}>
                       <label>Endereço de Entrega</label>
-                      <input required placeholder="Rua, Número, Bairro, Cidade" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} />
+                      <input required placeholder="Rua, Número, Bairro, Cidade" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} disabled style={{opacity: 0.7}} />
                     </div>
                     <div className="input-group" style={{ flex: 1 }}>
                       <label>CEP</label>
-                      <input required placeholder="00000-000" value={cep} onChange={e => setCep(e.target.value)} />
+                      <input required placeholder="00000-000" value={cep} onChange={e => setCep(e.target.value)} disabled style={{opacity: 0.7}} />
                     </div>
                   </div>
                   
@@ -681,6 +721,44 @@ export default function App() {
               </div>
             )}
             
+            <section className="metric-card form-card" style={{ marginBottom: '24px' }}>
+              <div className="metric-header">
+                <h3>Cadastrar Novo Cliente</h3>
+                <span className="badge-service">Customer DB</span>
+              </div>
+              <form onSubmit={handleCreateCustomer} className="modern-form">
+                <div className="form-row">
+                  <div className="input-group">
+                    <label>ID do Cliente</label>
+                    <input required value={newCustId} onChange={e => setNewCustId(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>Nome Completo</label>
+                    <input required placeholder="João da Silva" value={newCustName} onChange={e => setNewCustName(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>E-mail</label>
+                    <input type="email" required placeholder="joao@email.com" value={newCustEmail} onChange={e => setNewCustEmail(e.target.value)} />
+                  </div>
+                  <div className="input-group">
+                    <label>Telefone / SMS</label>
+                    <input required placeholder="(11) 99999-9999" value={newCustPhone} onChange={e => setNewCustPhone(e.target.value)} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="input-group" style={{ flex: 3 }}>
+                    <label>Endereço Completo</label>
+                    <input required placeholder="Rua das Flores, 123" value={newCustAddress} onChange={e => setNewCustAddress(e.target.value)} />
+                  </div>
+                  <div className="input-group" style={{ flex: 1 }}>
+                    <label>CEP</label>
+                    <input required placeholder="00000-000" value={newCustCep} onChange={e => setNewCustCep(e.target.value)} />
+                  </div>
+                </div>
+                <button type="submit" className="primary-button" style={{ marginTop: '16px' }}>Cadastrar Cliente</button>
+              </form>
+            </section>
+
             <div className="forms-grid" style={{ gridTemplateColumns: '1fr 2fr' }}>
               <section className="metric-card form-card">
                 <div className="metric-header">

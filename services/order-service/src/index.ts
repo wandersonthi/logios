@@ -3,6 +3,7 @@ import cors from 'cors';
 import { OrderController } from './presentation/controllers/OrderController';
 import { AuthController } from './presentation/controllers/AuthController';
 import { UserController } from './presentation/controllers/UserController';
+import { CustomerController } from './presentation/controllers/CustomerController';
 
 const app = express();
 app.use(cors());
@@ -11,6 +12,7 @@ app.use(express.json());
 const orderController = new OrderController();
 const authController = new AuthController();
 const userController = new UserController();
+const customerController = new CustomerController();
 
 app.post('/orders', (req, res) => orderController.create(req, res));
 app.get('/orders', (req, res) => orderController.getAll(req, res));
@@ -21,6 +23,8 @@ app.post('/audit', (req, res) => orderController.addAuditLog(req, res));
 app.post('/login', (req, res) => authController.login(req, res));
 app.get('/users', (req, res) => userController.getAll(req, res));
 app.post('/users', (req, res) => userController.create(req, res));
+app.get('/customers', (req, res) => customerController.getAll(req, res));
+app.post('/customers', (req, res) => customerController.create(req, res));
 
 const PORT = process.env.PORT || 3001;
 
