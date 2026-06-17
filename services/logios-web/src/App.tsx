@@ -263,7 +263,7 @@ export default function App() {
     e.preventDefault();
     try {
       const payload = {
-        id: newCustId, name: newCustName, phone: newCustPhone, 
+        id: 'CLI-' + newCustId, name: newCustName, phone: newCustPhone, 
         email: newCustEmail, address: newCustAddress, cep: newCustCep
       };
       const res = await fetch(CUSTOMERS_API, {
@@ -729,8 +729,8 @@ export default function App() {
               <form onSubmit={handleCreateCustomer} className="modern-form">
                 <div className="form-row">
                   <div className="input-group">
-                    <label>ID do Cliente</label>
-                    <input required value={newCustId} onChange={e => setNewCustId(e.target.value)} />
+                    <label>ID do Cliente (Auto)</label>
+                    <input required value={'CLI-' + newCustId} disabled style={{opacity: 0.7}} />
                   </div>
                   <div className="input-group">
                     <label>Nome Completo</label>
