@@ -262,8 +262,9 @@ export default function App() {
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const finalId = newCustId.startsWith('CLI-') ? newCustId : 'CLI-' + newCustId;
       const payload = {
-        id: 'CLI-' + newCustId, name: newCustName, phone: newCustPhone, 
+        id: finalId, name: newCustName, phone: newCustPhone, 
         email: newCustEmail, address: newCustAddress, cep: newCustCep
       };
       const res = await fetch(CUSTOMERS_API, {
@@ -280,6 +281,16 @@ export default function App() {
     } catch (err: any) {
       showNotification(err.message, 'error');
     }
+  };
+
+  const handleEditCustomer = (c: any) => {
+    setNewCustId(c.id);
+    setNewCustName(c.name);
+    setNewCustPhone(c.phone);
+    setNewCustEmail(c.email);
+    setNewCustAddress(c.address);
+    setNewCustCep(c.cep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleExportBackup = () => {
@@ -730,7 +741,7 @@ export default function App() {
                 <div className="form-row">
                   <div className="input-group">
                     <label>ID do Cliente (Auto)</label>
-                    <input required value={'CLI-' + newCustId} disabled style={{opacity: 0.7}} />
+                    <input required value={newCustId.startsWith('CLI-') ? newCustId : 'CLI-' + newCustId} disabled style={{opacity: 0.7}} />
                   </div>
                   <div className="input-group">
                     <label>Nome Completo</label>
@@ -755,7 +766,9 @@ export default function App() {
                     <input required placeholder="00000-000" value={newCustCep} onChange={e => setNewCustCep(e.target.value)} />
                   </div>
                 </div>
-                <button type="submit" className="primary-button" style={{ marginTop: '16px' }}>Cadastrar Cliente</button>
+                <button type="submit" className="primary-button" style={{ marginTop: '16px' }}>
+                  {newCustId.startsWith('CLI-') ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+                </button>
               </form>
             </section>
 
@@ -795,7 +808,12 @@ export default function App() {
                   <div>
                     <div className="metric-header">
                       <h3>Perfil do Cliente</h3>
-                      <span className="badge-service">ID: {selectedCustomerObj.id}</span>
+                      <div>
+                        <span className="badge-service" style={{marginRight: '8px'}}>ID: {selectedCustomerObj.id}</span>
+                        <button onClick={() => handleEditCustomer(selectedCustomerObj)} className="outline-button" style={{padding: '4px 8px', fontSize: '0.8rem', margin: 0, borderColor: '#3b82f6', color: '#3b82f6'}}>
+                          Editar Dados
+                        </button>
+                      </div>
                     </div>
                     
                     <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
