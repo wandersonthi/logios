@@ -557,11 +557,9 @@ export default function App() {
                   <span className="badge-service">Tracking Service</span>
                 </div>
                 <form onSubmit={handleConsultTracking} className="modern-form">
-                  <div className="form-row">
-                    <div className="input-group full-width" style={{flexDirection: 'row', gap: '8px'}}>
-                      <input style={{flex: 1}} required placeholder="Digite o ID do pedido..." value={trackingId} onChange={e => setTrackingId(e.target.value)} />
-                      <button type="submit" className="primary-button">Consultar</button>
-                    </div>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <input style={{flex: '1 1 200px'}} required placeholder="Digite o ID do pedido..." value={trackingId} onChange={e => setTrackingId(e.target.value)} />
+                    <button type="submit" className="primary-button" style={{flex: '0 0 auto', padding: '14px 24px', margin: 0}}>Consultar</button>
                   </div>
                 </form>
 
@@ -576,19 +574,15 @@ export default function App() {
                     <div className="update-section">
                       <h4>Atualizar Status Manualmente</h4>
                       <form onSubmit={handleUpdateTracking} className="modern-form">
-                        <div className="form-row">
-                          <div className="input-group">
-                            <select value={updateStatus} onChange={e => setUpdateStatus(e.target.value)}>
-                              <option value="PREPARANDO">Preparando</option>
-                              <option value="EM_TRANSITO">Em Trânsito</option>
-                              <option value="ENTREGUE">Entregue</option>
-                              <option value="CANCELADO">Cancelado</option>
-                            </select>
-                          </div>
-                          <div className="input-group">
-                            <input required placeholder="Nova localização" value={updateLocation} onChange={e => setUpdateLocation(e.target.value)} />
-                          </div>
-                          <button type="submit" className="outline-button">Salvar</button>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                          <select style={{flex: '1 1 120px'}} value={updateStatus} onChange={e => setUpdateStatus(e.target.value)}>
+                            <option value="PREPARANDO">Preparando</option>
+                            <option value="EM_TRANSITO">Em Trânsito</option>
+                            <option value="ENTREGUE">Entregue</option>
+                            <option value="CANCELADO">Cancelado</option>
+                          </select>
+                          <input style={{flex: '1 1 120px'}} required placeholder="Nova localização" value={updateLocation} onChange={e => setUpdateLocation(e.target.value)} />
+                          <button type="submit" className="outline-button" style={{flex: '0 0 auto', margin: 0}}>Salvar</button>
                         </div>
                       </form>
                     </div>
