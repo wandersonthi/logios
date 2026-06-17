@@ -70,7 +70,7 @@ export class OrderController {
     try {
       const repository = new PostgresOrderRepository();
       const query = `
-        SELECT o.id, o.customer_id, o.customer_name, o.customer_phone, o.customer_email, o.delivery_address, o.cep,
+        SELECT o.id, o.customer_id, o.customer_name, o.customer_phone, o.customer_email, o.delivery_address, o.cep, o.reference_point,
                o.weight, o.distance, o.shipping_type, o.items,
                t.status, t.location, t.updated_at 
         FROM orders o 
@@ -80,7 +80,7 @@ export class OrderController {
       const result = await (repository as any).pool.query(query);
 
       // Gerar CSV
-      let csvData = 'ID do Pedido,ID do Cliente,Nome,Telefone,Email,Endereço de Entrega,CEP,Peso (kg),Distancia (km),Tipo Frete,Itens,Status Rastreio,Localizacao Atual,Ultima Atualizacao\n';
+      let csvData = 'ID do Pedido,ID do Cliente,Nome,Telefone,Email,Endereço de Entrega,CEP,Ponto de Referencia,Peso (kg),Distancia (km),Tipo Frete,Itens,Status Rastreio,Localizacao Atual,Ultima Atualizacao\n';
       
       for (const row of result.rows) {
         const id = row.id;
@@ -90,6 +90,7 @@ export class OrderController {
         const customerEmail = `"${row.customer_email || ''}"`;
         const deliveryAddress = `"${row.delivery_address || ''}"`;
         const cep = `"${row.cep || ''}"`;
+        const referencePoint = `"${row.reference_point || ''}"`;
         const weight = row.weight;
         const distance = row.distance;
         const shippingType = row.shipping_type;
@@ -99,7 +100,7 @@ export class OrderController {
         const location = row.location || '-';
         const updatedAt = row.updated_at ? new Date(row.updated_at).toLocaleString('pt-BR') : '-';
 
-        csvData += `${id},${customerId},${customerName},${customerPhone},${customerEmail},${deliveryAddress},${cep},${weight},${distance},${shippingType},${items},${status},${location},${updatedAt}\n`;
+        csvData += `${id},${customerId},${customerName},${customerPhone},${customerEmail},${deliveryAddress},${cep},${referencePoint},${weight},${distance},${shippingType},${items},${status},${location},${updatedAt}\n`;
       }
 
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

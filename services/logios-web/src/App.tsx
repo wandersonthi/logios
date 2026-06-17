@@ -31,6 +31,7 @@ export default function App() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [cep, setCep] = useState('');
+  const [referencePoint, setReferencePoint] = useState('');
   const [weight, setWeight] = useState('');
   const [distance, setDistance] = useState('');
   const [shippingType, setShippingType] = useState('standard');
@@ -126,6 +127,7 @@ export default function App() {
         customerEmail,
         deliveryAddress,
         cep,
+        referencePoint,
         weight: Number(weight),
         distance: Number(distance),
         shippingType,
@@ -158,6 +160,7 @@ export default function App() {
       setCustomerEmail('');
       setDeliveryAddress('');
       setCep('');
+      setReferencePoint('');
       fetchData(); // refresh data
     } catch (err: any) {
       showNotification(err.message, 'error');
@@ -483,6 +486,11 @@ export default function App() {
                       <label>CEP</label>
                       <input required placeholder="00000-000" value={cep} onChange={e => setCep(e.target.value)} />
                     </div>
+                  </div>
+                  
+                  <div className="input-group full-width">
+                    <label>Ponto de Referência</label>
+                    <input placeholder="ex: Ao lado da padaria, prédio azul..." value={referencePoint} onChange={e => setReferencePoint(e.target.value)} />
                   </div>
 
                   <div className="form-row">

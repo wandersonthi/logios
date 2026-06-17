@@ -27,14 +27,15 @@ export class PostgresOrderRepository implements IOrderRepository {
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address VARCHAR(255);
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS cep VARCHAR(20);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS reference_point VARCHAR(255);
     `;
     await this.pool.query(query);
   }
 
   async save(order: Order): Promise<void> {
     const query = `
-      INSERT INTO orders (id, customer_id, weight, distance, shipping_type, items, customer_name, customer_phone, customer_email, delivery_address, cep)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO orders (id, customer_id, weight, distance, shipping_type, items, customer_name, customer_phone, customer_email, delivery_address, cep, reference_point)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     `;
     await this.pool.query(query, [
       order.id,
@@ -47,7 +48,8 @@ export class PostgresOrderRepository implements IOrderRepository {
       order.customerPhone,
       order.customerEmail,
       order.deliveryAddress,
-      order.cep
+      order.cep,
+      order.referencePoint
     ]);
   }
 
@@ -69,7 +71,8 @@ export class PostgresOrderRepository implements IOrderRepository {
       row.customer_phone,
       row.customer_email,
       row.delivery_address,
-      row.cep
+      row.cep,
+      row.reference_point
     );
   }
 
@@ -88,7 +91,8 @@ export class PostgresOrderRepository implements IOrderRepository {
       row.customer_phone,
       row.customer_email,
       row.delivery_address,
-      row.cep
+      row.cep,
+      row.reference_point
     ));
   }
 }

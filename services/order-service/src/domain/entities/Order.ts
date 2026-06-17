@@ -10,7 +10,8 @@ export class Order {
     public readonly customerPhone: string = '',
     public readonly customerEmail: string = '',
     public readonly deliveryAddress: string = '',
-    public readonly cep: string = ''
+    public readonly cep: string = '',
+    public readonly referencePoint: string = ''
   ) {}
 
   // Entidade de domínio pura (sem regras complexas aqui por enquanto, cálculo de frete vai em Use Case ou Strategy separado)
