@@ -28,14 +28,14 @@ export class PostgresCustomerRepository implements ICustomerRepository {
 
   async save(customer: Customer): Promise<void> {
     await this.pool.query(
-      \`INSERT INTO customers (id, name, phone, email, address, cep, created_at)
+      `INSERT INTO customers (id, name, phone, email, address, cep, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          phone = EXCLUDED.phone,
          email = EXCLUDED.email,
          address = EXCLUDED.address,
-         cep = EXCLUDED.cep\`,
+         cep = EXCLUDED.cep`,
       [customer.id, customer.name, customer.phone, customer.email, customer.address, customer.cep, customer.createdAt]
     );
   }
