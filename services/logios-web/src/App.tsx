@@ -243,8 +243,16 @@ export default function App() {
 
   // Calcula Métricas
   const totalOrders = orders.length;
-  // Simulando Receita (Peso * Distancia * 1.5)
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.weight * o.distance * 1.5), 0);
+  // Calculando Receita Real usando a regra oficial do backend
+  const calculateShippingCost = (o: any) => {
+    // Atenção: a API pode retornar shippingType ou shipping_type
+    const type = o.shippingType || o.shipping_type || 'standard';
+    if (type === 'express') {
+      return 20 + (Number(o.distance) * 1.0) + (Number(o.weight) * 5);
+    }
+    return 10 + (Number(o.distance) * 0.5) + (Number(o.weight) * 2);
+  };
+  const totalRevenue = orders.reduce((acc, o) => acc + calculateShippingCost(o), 0);
   const ticketMedio = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
   const processando = trackings.filter(t => t.status === 'PREPARANDO').length;
@@ -252,11 +260,11 @@ export default function App() {
   const entregues = trackings.filter(t => t.status === 'ENTREGUE').length;
   const cancelados = trackings.filter(t => t.status === 'CANCELADO').length;
 
-  // Cálculos dinâmicos de Frete
+  // Cálculos dinâmicos de Frete (Simulação idêntica ao Servidor)
   const parsedWeight = Number(weight) || 0;
   const parsedDistance = Number(distance) || 0;
-  const standardCost = parsedWeight * 0.5 + parsedDistance * 0.1;
-  const expressCost = parsedWeight * 0.8 + parsedDistance * 0.2;
+  const standardCost = 10 + (parsedDistance * 0.5) + (parsedWeight * 2);
+  const expressCost = 20 + (parsedDistance * 1.0) + (parsedWeight * 5);
   const standardDays = Math.max(1, Math.ceil(parsedDistance / 50));
   const expressDays = Math.max(1, Math.ceil(parsedDistance / 100));
 
