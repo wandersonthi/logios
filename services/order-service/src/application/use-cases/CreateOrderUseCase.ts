@@ -18,6 +18,11 @@ export class CreateOrderUseCase {
     distance: number;
     shippingType: string;
     items: string[];
+    customerName?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    deliveryAddress?: string;
+    cep?: string;
   }): Promise<{ orderId: string; shippingCost: number }> {
     
     const order = new Order(
@@ -26,7 +31,12 @@ export class CreateOrderUseCase {
       input.weight,
       input.distance,
       input.shippingType,
-      input.items
+      input.items,
+      input.customerName || '',
+      input.customerPhone || '',
+      input.customerEmail || '',
+      input.deliveryAddress || '',
+      input.cep || ''
     );
 
     const strategy = ShippingStrategyFactory.create(input.shippingType);

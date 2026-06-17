@@ -23,9 +23,14 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
 
   // Form States
-  const generateRandomId = () => `pedido-${Math.floor(Math.random() * 100000)}`;
+  const generateRandomId = () => Math.floor(Math.random() * 100000).toString();
   const [orderId, setOrderId] = useState(generateRandomId());
   const [customerId, setCustomerId] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [cep, setCep] = useState('');
   const [weight, setWeight] = useState('');
   const [distance, setDistance] = useState('');
   const [shippingType, setShippingType] = useState('standard');
@@ -116,6 +121,11 @@ export default function App() {
       const payload = {
         id: orderId,
         customerId,
+        customerName,
+        customerPhone,
+        customerEmail,
+        deliveryAddress,
+        cep,
         weight: Number(weight),
         distance: Number(distance),
         shippingType,
@@ -143,6 +153,11 @@ export default function App() {
 
       showNotification('Pedido e Rastreio gerados com sucesso!', 'success');
       setOrderId(generateRandomId());
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerEmail('');
+      setDeliveryAddress('');
+      setCep('');
       fetchData(); // refresh data
     } catch (err: any) {
       showNotification(err.message, 'error');
@@ -233,6 +248,14 @@ export default function App() {
   const emRota = trackings.filter(t => t.status === 'EM_TRANSITO').length;
   const entregues = trackings.filter(t => t.status === 'ENTREGUE').length;
   const cancelados = trackings.filter(t => t.status === 'CANCELADO').length;
+
+  // Cálculos dinâmicos de Frete
+  const parsedWeight = Number(weight) || 0;
+  const parsedDistance = Number(distance) || 0;
+  const standardCost = parsedWeight * 0.5 + parsedDistance * 0.1;
+  const expressCost = parsedWeight * 0.8 + parsedDistance * 0.2;
+  const standardDays = Math.max(1, Math.ceil(parsedDistance / 50));
+  const expressDays = Math.max(1, Math.ceil(parsedDistance / 100));
 
   if (!isAuthenticated) {
     return (
@@ -427,21 +450,48 @@ export default function App() {
                 <form onSubmit={handleCreateOrder} className="modern-form">
                   <div className="form-row">
                     <div className="input-group">
-                      <label>ID do Pedido</label>
-                      <input required placeholder="ex: pedido-123" value={orderId} onChange={e => setOrderId(e.target.value)} />
+                      <label>ID do Pedido (Numérico)</label>
+                      <input required placeholder="ex: 12345" value={orderId} onChange={e => setOrderId(e.target.value)} />
                     </div>
                     <div className="input-group">
                       <label>ID do Cliente</label>
-                      <input required placeholder="ex: cliente-abc" value={customerId} onChange={e => setCustomerId(e.target.value)} />
+                      <input required placeholder="ex: CLI-999" value={customerId} onChange={e => setCustomerId(e.target.value)} />
                     </div>
                   </div>
+                  
                   <div className="form-row">
                     <div className="input-group">
-                      <label>Peso (kg)</label>
-                      <input type="number" required placeholder="10" value={weight} onChange={e => setWeight(e.target.value)} />
+                      <label>Nome Completo do Cliente</label>
+                      <input required placeholder="Nome do Destinatário" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                     </div>
                     <div className="input-group">
-                      <label>Distância (km)</label>
+                      <label>Telefone / SMS</label>
+                      <input required placeholder="(11) 99999-9999" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>E-mail (Notificações)</label>
+                      <input type="email" required placeholder="cliente@email.com" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="input-group" style={{ flex: 2 }}>
+                      <label>Endereço de Entrega</label>
+                      <input required placeholder="Rua, Número, Bairro, Cidade" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} />
+                    </div>
+                    <div className="input-group" style={{ flex: 1 }}>
+                      <label>CEP</label>
+                      <input required placeholder="00000-000" value={cep} onChange={e => setCep(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="input-group">
+                      <label>Peso Estimado (kg)</label>
+                      <input type="number" step="0.1" required placeholder="10" value={weight} onChange={e => setWeight(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>Distância da Entrega (km)</label>
                       <input type="number" required placeholder="50" value={distance} onChange={e => setDistance(e.target.value)} />
                     </div>
                     <div className="input-group">
@@ -453,10 +503,35 @@ export default function App() {
                     </div>
                   </div>
                   <div className="input-group full-width">
-                    <label>Itens (separados por vírgula)</label>
+                    <label>Itens do Pedido (separados por vírgula)</label>
                     <input required placeholder="1x Notebook, 2x Mouse" value={items} onChange={e => setItems(e.target.value)} />
                   </div>
-                  <button type="submit" className="primary-button">Gerar Pedido</button>
+
+                  {/* Simulação Dinâmica de Frete */}
+                  {(parsedWeight > 0 || parsedDistance > 0) && (
+                    <div style={{
+                      marginTop: '16px', padding: '16px', borderRadius: '8px', 
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)',
+                      display: 'flex', gap: '24px', flexWrap: 'wrap'
+                    }}>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, color: '#93c5fd', fontSize: '0.85rem' }}>SIMULAÇÃO STANDARD</p>
+                        <h4 style={{ margin: '4px 0 0 0', color: shippingType === 'standard' ? '#fff' : '#888' }}>
+                          R$ {standardCost.toFixed(2)}
+                        </h4>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#aaa' }}>Estimativa: {standardDays} dia(s)</p>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ margin: 0, color: '#fca5a5', fontSize: '0.85rem' }}>SIMULAÇÃO EXPRESS</p>
+                        <h4 style={{ margin: '4px 0 0 0', color: shippingType === 'express' ? '#fff' : '#888' }}>
+                          R$ {expressCost.toFixed(2)}
+                        </h4>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#aaa' }}>Estimativa: {expressDays} dia(s)</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <button type="submit" className="primary-button" style={{ marginTop: '16px' }}>Gerar Pedido Definitivo</button>
                 </form>
               </section>
 

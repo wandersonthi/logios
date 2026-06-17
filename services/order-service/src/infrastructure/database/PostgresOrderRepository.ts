@@ -22,14 +22,19 @@ export class PostgresOrderRepository implements IOrderRepository {
         shipping_type VARCHAR(50) NOT NULL,
         items JSONB NOT NULL
       );
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(50);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email VARCHAR(255);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address VARCHAR(255);
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS cep VARCHAR(20);
     `;
     await this.pool.query(query);
   }
 
   async save(order: Order): Promise<void> {
     const query = `
-      INSERT INTO orders (id, customer_id, weight, distance, shipping_type, items)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO orders (id, customer_id, weight, distance, shipping_type, items, customer_name, customer_phone, customer_email, delivery_address, cep)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     `;
     await this.pool.query(query, [
       order.id,
@@ -38,6 +43,11 @@ export class PostgresOrderRepository implements IOrderRepository {
       order.distance,
       order.shippingType,
       JSON.stringify(order.items),
+      order.customerName,
+      order.customerPhone,
+      order.customerEmail,
+      order.deliveryAddress,
+      order.cep
     ]);
   }
 
@@ -54,7 +64,12 @@ export class PostgresOrderRepository implements IOrderRepository {
       parseFloat(row.weight),
       parseFloat(row.distance),
       row.shipping_type,
-      row.items
+      row.items,
+      row.customer_name,
+      row.customer_phone,
+      row.customer_email,
+      row.delivery_address,
+      row.cep
     );
   }
 
@@ -68,7 +83,12 @@ export class PostgresOrderRepository implements IOrderRepository {
       parseFloat(row.weight),
       parseFloat(row.distance),
       row.shipping_type,
-      row.items
+      row.items,
+      row.customer_name,
+      row.customer_phone,
+      row.customer_email,
+      row.delivery_address,
+      row.cep
     ));
   }
 }
