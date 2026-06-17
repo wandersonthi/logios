@@ -1,54 +1,59 @@
-# Logios - Logistics and Delivery Management System
+# LogisOS 📦
 
-Bem-vindo ao repositório do **Logios**, uma solução de software projetada para gerenciar pedidos de entrega e rastreamento em tempo real. Este projeto foi desenvolvido para demonstrar proficiência avançada em engenharia de software e arquitetura de sistemas.
+**LogisOS** é um sistema moderno e inteligente de gestão logística, projetado com uma arquitetura de microsserviços para orquestrar pedidos, rastreamento e clientes de ponta a ponta.
 
-## 📖 Descrição do Problema
-O gerenciamento de entregas de última milha é um desafio para empresas de e-commerce. A falta de visibilidade em tempo real, cálculos de frete rígidos e sistemas monolíticos difíceis de escalar são problemas comuns. 
+## 🚀 Arquitetura e Tecnologias
 
-**Solução:** O Logios divide essa complexidade em dois microsserviços autônomos que cuidam da criação de pedidos, cálculo de frete e rastreamento de entregas.
+A aplicação é dividida em serviços isolados, rodando sobre contêineres Docker, o que permite alta escalabilidade e manutenção independente:
 
-## 🏗️ Arquitetura e Microsserviços
-A solução é composta por:
-1. **Order Service (Porta 3001):** Responsável por receber solicitações de entrega, calcular o valor do frete com base em peso e distância e persistir o pedido.
-2. **Tracking Service (Porta 3002):** Responsável por atualizar o status da entrega e notificar interessados em tempo real.
+- **Frontend (Web)**: Desenvolvido em **React + TypeScript + Vite**. Fornece um painel (Dashboard) interativo, moderno e em tempo real.
+- **Order Service**: Microsserviço responsável por gerenciar Pedidos, Clientes (Customer DB) e Integrações (Auditoria/SMS). Feito com **Node.js, Express e TypeScript**.
+- **Tracking Service**: Microsserviço isolado focado apenas no estado do pacote no mundo físico, lidando com transições de status (Preparando, Em Trânsito, Entregue, Cancelado). Feito com **Node.js, Express e TypeScript**.
+- **Database**: Banco de dados relacional **PostgreSQL**, onde as entidades (Pedidos, Rastreios, Clientes e Auditoria) estão modeladas de forma estruturada.
 
-Ambos os microsserviços utilizam **Arquitetura Limpa (Clean Architecture)**:
-- `domain/`: Entidades puras, regras de negócio centrais, padrões de projeto independentes de frameworks.
-- `application/`: Casos de uso (Use Cases) e interfaces de repositórios (DIP).
-- `infrastructure/`: Implementação concreta de acesso a banco de dados (PostgreSQL).
-- `presentation/`: Controladores Express que expõem as APIs REST.
+## 🌟 Funcionalidades Implementadas
 
-## 🛡️ SOLID Aplicado
-- **SRP:** `CreateOrderUseCase` faz apenas a criação do pedido, delegando persistência ao repositório e cálculo de frete às estratégias.
-- **OCP:** Novas estratégias de frete podem ser adicionadas implementando `ShippingStrategy` sem alterar as classes de cálculo atuais.
-- **LSP / DIP:** Os casos de uso dependem apenas de abstrações (`IOrderRepository`, `ITrackingRepository`), permitindo substituir o banco de dados sem alterar a lógica de negócios.
-- **ISP:** Interfaces limpas apenas com os métodos necessários (`save`, `findByOrderId`).
+1. **Gestão e Cadastro de Clientes (CRUD)**
+   - Cadastro estruturado de clientes.
+   - Geração automática de `ID do Cliente`.
+   - Auto-preenchimento (Dropdown Inteligente) na criação de novos pedidos: ao escolher um cliente, endereço, telefone e e-mail são preenchidos automaticamente.
+   
+2. **Criação de Pedidos Dinâmica**
+   - Inserção de métricas de frete com cálculo de taxas ao vivo (Standard vs Express) baseados na distância e peso.
+   
+3. **Tracking & Rastreamento em Tempo Real**
+   - O pacote pode ter seu status atualizado a cada instante.
+   - Botão de cancelamento rápido ("Kill Switch") que paralisa a entrega imediatamente.
 
-## 🧩 Design Patterns Aplicados (4+)
-1. **Strategy:** Utilizado no cálculo de frete (`StandardShippingStrategy` e `ExpressShippingStrategy`).
-2. **Factory Method:** `ShippingStrategyFactory` decide qual estratégia de frete instanciar com base na entrada do usuário.
-3. **Repository:** Abstração de persistência (`PostgresOrderRepository` e `PostgresTrackingRepository`).
-4. **Observer:** `TrackingSubject` notifica observadores (ex: `EmailNotificationObserver`) sempre que um status de rastreamento é atualizado.
+4. **Auditoria Avançada (Singleton Observer)**
+   - O sistema implementa o design pattern *Observer* juntamente com um *Singleton* para escutar todos os eventos vitais da plataforma.
+   - **Integração com SMS Gateway (Mock)**: Quando um pedido é cancelado, um gatilho de notificação via SMS é simulado e imediatamente registrado na trilha de auditoria.
 
-## 🧹 Clean Code
-- Nomes de variáveis descritivos.
-- Injeção de dependência para evitar alto acoplamento.
-- Separação clara de responsabilidades (Controllers tratam req/res, Use Cases tratam lógica, Repositories tratam dados).
-- Tratamento de exceções centralizado.
+5. **Dashboard Financeiro**
+   - Cálculo rigoroso e unificado de Receita Total e Ticket Médio, derivado de uma fórmula matemática em backend e replicada dinamicamente no frontend.
 
-## 🧪 Testes (TDD e BDD)
-- **TDD:** O desenvolvimento foi guiado por testes unitários criados com `Jest` para as estratégias de frete e lógica de rastreamento.
-- **BDD:** Cenários Gherkin escritos no `cucumber.js` para garantir o comportamento sob a ótica de negócios.
-  - Ex: *Feature: Create Order and Calculate Shipping* -> *Given an order... When standard shipping... Then cost is 80*.
+## ⚙️ Como Executar o Projeto
 
-## 🐳 Execução e Docker
-O projeto é completamente dockerizado para desenvolvimento e produção.
-1. Clone o repositório.
-2. Execute `docker-compose up -d --build`.
-3. Os serviços estarão disponíveis nas portas 3001 e 3002. O PostgreSQL roda internamente na 5432.
+O projeto inteiro foi construído para rodar localmente com extrema facilidade, graças à conteinerização.
 
-## 🚀 Deploy e Justificativas Técnicas
-O sistema foi projetado para rodar em uma **VPS Ubuntu**.
-O `docker-compose` permite que todos os serviços subam orquestrados sem a necessidade de configurar ambientes Node.js ou Bancos de dados manualmente na máquina host, garantindo imutabilidade e paridade entre os ambientes.
+### Pré-requisitos
+- [Docker](https://www.docker.com/) e Docker Compose instalados.
 
-As tecnologias Node.js + TypeScript foram escolhidas devido ao seu ecossistema robusto para microsserviços, suporte nativo avançado a tipagem estática (facilitando SOLID) e curva de performance aceitável para I/O intensivo como APIs RESTful de rastreamento e pedidos.
+### Passos
+
+1. Clone o repositório na sua máquina.
+2. Acesse a raiz do projeto:
+   ```bash
+   cd logios
+   ```
+3. Suba todos os contêineres:
+   ```bash
+   docker compose up -d --build
+   ```
+4. Pronto! O acesso à aplicação estará disponível em:
+   - **Frontend:** http://localhost:80 (ou apenas `localhost`)
+   - **Order Service (API):** http://localhost:3001
+   - **Tracking Service (API):** http://localhost:3002
+
+## 🔒 Variáveis de Ambiente e Configuração
+As configurações de conexão entre serviços estão embutidas no arquivo `docker-compose.yml`. Em ambiente de produção, certifique-se de alterar as credenciais de banco de dados (`POSTGRES_USER` e `POSTGRES_PASSWORD`).
