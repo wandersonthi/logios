@@ -14,6 +14,7 @@ export default function App() {
   const [systemUsers, setSystemUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -218,6 +219,34 @@ export default function App() {
     }
   };
 
+  const handleCancelOrder = async (orderId: string, phone: string) => {
+    if (!window.confirm(`Deseja cancelar o pedido ${orderId}?`)) return;
+    try {
+      const res = await fetch(TRACKING_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          status: 'CANCELADO',
+          location: 'Cancelado pelo Painel de Controle'
+        })
+      });
+      if (!res.ok) throw new Error('Erro ao cancelar pedido');
+      
+      // Simular Integração com Zenvia/Twilio (Log de SMS)
+      await fetch(AUDIT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `[SMS GATEWAY] 📡 Enviando SMS para ${phone} - "Aviso: Seu pedido ${orderId} foi CANCELADO."` })
+      });
+
+      showNotification(`Pedido cancelado. SMS enviado para ${phone}`, 'success');
+      fetchData();
+    } catch (err: any) {
+      showNotification(err.message, 'error');
+    }
+  };
+
   const handleExportBackup = () => {
     window.open(`${ORDER_API}/export`, '_blank');
   };
@@ -267,6 +296,25 @@ export default function App() {
   const expressCost = 20 + (parsedDistance * 1.0) + (parsedWeight * 5);
   const standardDays = Math.max(1, Math.ceil(parsedDistance / 50));
   const expressDays = Math.max(1, Math.ceil(parsedDistance / 100));
+
+  // Agrupar clientes
+  const customersMap = new Map();
+  orders.forEach(o => {
+    if (!o.customerId) return;
+    if (!customersMap.has(o.customerId)) {
+      customersMap.set(o.customerId, {
+        id: o.customerId,
+        name: o.customerName,
+        phone: o.customerPhone,
+        email: o.customerEmail,
+        address: o.deliveryAddress,
+        orders: []
+      });
+    }
+    customersMap.get(o.customerId).orders.push(o);
+  });
+  const uniqueCustomers = Array.from(customersMap.values());
+  const selectedCustomerObj = uniqueCustomers.find(c => c.id === selectedCustomerId);
 
   if (!isAuthenticated) {
     return (
@@ -322,6 +370,9 @@ export default function App() {
           </button>
           <button className={`menu-item ${activeTab === 'Auditoria' ? 'active' : ''}`} onClick={() => { setActiveTab('Auditoria'); setIsMobileMenuOpen(false); }}>
             <span className="icon">📄</span> Auditoria
+          </button>
+          <button className={`menu-item ${activeTab === 'Clientes' ? 'active' : ''}`} onClick={() => { setActiveTab('Clientes'); setIsMobileMenuOpen(false); }}>
+            <span className="icon">👤</span> Clientes
           </button>
           {userRole === 'admin' && (
             <button className={`menu-item ${activeTab === 'Usuários' ? 'active' : ''}`} onClick={() => { setActiveTab('Usuários'); setIsMobileMenuOpen(false); }}>
@@ -618,6 +669,102 @@ export default function App() {
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Clientes' && (
+          <div className="orders-content">
+            {notification.show && (
+              <div className={`notification ${notification.type}`}>
+                {notification.message}
+              </div>
+            )}
+            
+            <div className="forms-grid" style={{ gridTemplateColumns: '1fr 2fr' }}>
+              <section className="metric-card form-card">
+                <div className="metric-header">
+                  <h3>Lista de Clientes</h3>
+                  <span className="badge-service">{uniqueCustomers.length} cadastros</span>
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {uniqueCustomers.length === 0 && <p style={{color: '#888'}}>Nenhum cliente cadastrado.</p>}
+                  {uniqueCustomers.map((c: any) => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => setSelectedCustomerId(c.id)}
+                      style={{
+                        padding: '12px', 
+                        borderRadius: '8px', 
+                        cursor: 'pointer',
+                        backgroundColor: selectedCustomerId === c.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.05)',
+                        border: selectedCustomerId === c.id ? '1px solid #3b82f6' : '1px solid transparent'
+                      }}
+                    >
+                      <h4 style={{ margin: '0 0 4px 0' }}>{c.name || 'Cliente Sem Nome'}</h4>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#aaa' }}>ID: {c.id}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="metric-card form-card">
+                {!selectedCustomerObj ? (
+                  <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
+                    <p>Selecione um cliente para ver o perfil e pedidos.</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="metric-header">
+                      <h3>Perfil do Cliente</h3>
+                      <span className="badge-service">ID: {selectedCustomerObj.id}</span>
+                    </div>
+                    
+                    <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+                      <p><strong>Nome:</strong> {selectedCustomerObj.name}</p>
+                      <p><strong>Telefone / SMS:</strong> {selectedCustomerObj.phone}</p>
+                      <p><strong>E-mail:</strong> {selectedCustomerObj.email}</p>
+                      <p><strong>Endereço:</strong> {selectedCustomerObj.address}</p>
+                    </div>
+
+                    <div className="metric-header">
+                      <h3>Histórico de Pedidos ({selectedCustomerObj.orders.length})</h3>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {selectedCustomerObj.orders.map((o: any) => {
+                        const tracking = trackings.find(t => t.orderId === o.id);
+                        const isCancelled = tracking?.status === 'CANCELADO';
+                        return (
+                          <div key={o.id} style={{
+                            padding: '16px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.05)',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            opacity: isCancelled ? 0.6 : 1
+                          }}>
+                            <div>
+                              <h4 style={{ margin: '0 0 8px 0' }}>Pedido #{o.id}</h4>
+                              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem' }}>Itens: {o.items?.join(', ')}</p>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: '#aaa' }}>
+                                Status do Rastreio: <strong style={{ color: isCancelled ? '#ef4444' : '#10b981' }}>{tracking?.status || 'NÃO INICIADO'}</strong>
+                              </p>
+                            </div>
+                            {!isCancelled && (
+                              <button 
+                                onClick={() => handleCancelOrder(o.id, selectedCustomerObj.phone)} 
+                                className="outline-button" 
+                                style={{ borderColor: '#ef4444', color: '#ef4444', margin: 0 }}
+                              >
+                                Cancelar Pedido
+                              </button>
+                            )}
+                            {isCancelled && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>CANCELADO</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
           </div>
         )}
